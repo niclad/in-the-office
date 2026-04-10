@@ -1,0 +1,187 @@
+<div class="topbar">
+  <div id="logo">
+    <h1 id="wordmk">Ito</h1>
+    <h2 class="subheading">In the office</h2>
+  </div>
+
+  <div class="button-row">
+    <mat-button-toggle-group
+      name="calendarLayout"
+      aria-label="Calendar Layout"
+      value="week"
+      disabled
+    >
+      <mat-button-toggle value="week">Weekly</mat-button-toggle>
+      <mat-button-toggle value="month">Monthly</mat-button-toggle>
+    </mat-button-toggle-group>
+    <button matButton="outlined"><mat-icon>menu_book</mat-icon> How-to</button>
+  </div>
+</div>
+
+<div class="content">
+  <div id="left-side">
+    <div>
+      <mat-card class="card" appearance="outlined">
+        <mat-card-title class="card-title">People</mat-card-title>
+        <mat-card-subtitle class="card-subtitle">Add people to the calendar</mat-card-subtitle>
+        <mat-card-content>
+          <mat-form-field class="input-field" appearance="outline">
+            <mat-label>Name</mat-label>
+            <mat-hint>Enter a name and press Enter</mat-hint>
+            <input matInput [(ngModel)]="namesInput" (keydown.enter)="submitName()" rows="4" />
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-footer class="card-footer">
+          <mat-chip-set>
+            @for (name of names; track name) {
+              <mat-chip-row>
+                {{ name }}
+                <button matChipRemove (click)="removeName(name)">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip-row>
+            }
+          </mat-chip-set>
+        </mat-card-footer>
+      </mat-card>
+    </div>
+    <div>
+      <mat-card class="card" appearance="outlined">
+        <mat-card-title class="card-title">Locations</mat-card-title>
+        <mat-card-subtitle class="card-subtitle">Add places people can work from</mat-card-subtitle>
+        <mat-card-content>
+          <mat-form-field class="input-field" appearance="outline">
+            <mat-label>Location</mat-label>
+            <mat-hint>Enter a location and press Enter</mat-hint>
+            <input matInput [(ngModel)]="placesInput" (keydown.enter)="submitPlace()" rows="4" />
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-footer class="card-footer">
+          <mat-chip-set>
+            @for (place of places; track place.name) {
+              <mat-chip-row [style.background-color]="place.color">
+                {{ place.name }}
+                <button matChipRemove (click)="removePlace(place)">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip-row>
+            }
+          </mat-chip-set>
+        </mat-card-footer>
+      </mat-card>
+    </div>
+    <div>
+      <mat-card class="card loader" appearance="outlined">
+        <mat-card-title class="card-title">Share</mat-card-title>
+        <mat-card-content>
+          <mat-card-subtitle class="card-subtitle inner"
+            >Copy and share the unique calendar ID</mat-card-subtitle
+          >
+          <mat-form-field class="input-field" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Share code</mat-label>
+            <textarea
+              matInput
+              id="calendarId-text"
+              [ngModel]="calendarId"
+              rows="2"
+              readonly
+            ></textarea>
+          </mat-form-field>
+          <button id="copy-button" matButton="filled" (click)="copyCalendarId()">
+            <mat-icon>content_copy</mat-icon>
+            Copy
+          </button>
+          <mat-card-subtitle class="card-subtitle inner"
+            >Load a shared calendar ID</mat-card-subtitle
+          >
+          <mat-form-field class="input-field" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Load code</mat-label>
+            <textarea matInput id="calendarId-text" [ngModel]="loadId" rows="2"></textarea>
+          </mat-form-field>
+          <button id="load-button" matButton="filled" (click)="loadCalendarId()">
+            <mat-icon>upload</mat-icon>
+            Load
+          </button>
+          <button id="load-clip-button" matButton="filled" (click)="loadCalendarIdFromClipboard()">
+            <mat-icon>content_paste_go</mat-icon>
+            Load from Clipboard
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+  <div id="right-side">
+    <mat-card class="card calendar-card" appearance="outlined">
+      <mat-card-title class="card-title">Calendar</mat-card-title>
+      <mat-card-subtitle class="card-subtitle"
+        >Select a person and then choose days. Pick a location to work from on those
+        days.</mat-card-subtitle
+      >
+      <mat-card-content>
+        <!-- Calendar UI -->
+        <div class="calendar">
+          <div id="control-row">
+            <mat-slide-toggle [(ngModel)]="showWeekend">Show Weekend</mat-slide-toggle>
+            <div class="place-selection">
+              @for (place of places; track place) {
+                <mat-chip [style.background-color]="place.color" (click)="assignPlace(place)">
+                  {{ place.name }}
+                </mat-chip>
+              }
+            </div>
+          </div>
+
+          <div class="weekView">
+            <button matIconButton matTooltip="Previous week" (click)="prevWeek()">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <button matButton="outlined" (click)="currentWeek()">Today</button>
+            <button matIconButton matTooltip="Next week" (click)="nextWeek()">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <p class="calendar-range" id="calendarRange">
+              Showing {{ visibleDays[0] | date: 'MMM dd' }} -
+              {{ visibleDays[visibleDays.length - 1] | date: 'MMM dd' }}
+            </p>
+            <div class="spacer"></div>
+          </div>
+          <div
+            class="calendar-grid"
+            [style.--person-count]="names.length"
+            [style.grid-template-columns]="gridColumns"
+          >
+            <!-- Header row -->
+            <div class="cell header-label">Person</div>
+
+            @for (day of visibleDays; track day) {
+              <div class="cell header-day" (click)="toggleAllPeople(day.getTime())">
+                {{ day | date: "ccc',' MMM dd" }}
+              </div>
+            }
+
+            <!-- One row per person -->
+            @for (person of dateGrid | keyvalue; track person; let r = $index) {
+              <div class="cell person-label day-cell" (click)="toggleAllVisibleDays(person.key)">
+                {{ person.key }}
+              </div>
+              @for (day of dateGrid[person.key] | keyvalue; track day) {
+                <div
+                  class="cell day-cell"
+                  [class.active]="isSelected(person.key, day.key)"
+                  (click)="toggleDay(person.key, day.key)"
+                  [style.background-color]="day.value ? day.value.color : ''"
+                >
+                  @if (day.value) {
+                    {{ day.value.name }}
+                  } @else {
+                    No selection
+                  }
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
